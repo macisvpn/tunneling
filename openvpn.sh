@@ -143,3 +143,10 @@ cat /etc/openvpn/ca.crt >> /etc/openvpn/globalssh.ovpn
 echo '</ca>' >> /etc/openvpn/globalssh.ovpn
 sed -i $ip /etc/openvpn/globalssh.ovpn
 cp /usr/lib/openvpn/openvpn-plugin-auth-pam.so /etc/openvpn/
+
+#set iptables
+iptables -t nat -I POSTROUTING -s 10.8.0.0/24 -o venet0 -j MASQUERADE
+iptables -t nat -I POSTROUTING -s 10.9.0.0/24 -o venet0 -j MASQUERADE
+iptables -t nat -I POSTROUTING -s 10.10.0.0/24 -o venet0 -j MASQUERADE
+
+service openvpn restart
