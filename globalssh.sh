@@ -11,8 +11,7 @@ apt-get -y install nano
 
 #membuat banner
 cat > /etc/issue.net <<-END
-FREE PREMIUM SSH
-PROVIDED BY GLOBALSSH[.]NET
+PREMIUM SSH SINGAPORE
 
 TERMS OF SERVICE:
 -NO SHARE ACCOUNT
@@ -22,12 +21,7 @@ TERMS OF SERVICE:
 -NO SPAM
 -NO PLAYSTATION SITE
 
-VISIT OUR WEB:
-CREATE SSH PREMIUM : GLOBALSSH[.]NET
-DONT FORGET SUPPORT US
-DONT USE ADBLOCK WHILE VISIT GLOBALSSH[.]NET
-
-REGARDS
+THANKS.
 END
 
 #set banner openssh
@@ -69,6 +63,7 @@ http_access deny manager
 http_access allow localhost
 http_access deny all
 http_port 8000
+http_port 3128
 coredump_dir /var/spool/squid3
 refresh_pattern ^ftp:           1440    20%     10080
 refresh_pattern ^gopher:        1440    0%      1440
