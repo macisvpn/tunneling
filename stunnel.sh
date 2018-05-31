@@ -1,5 +1,5 @@
 #!/bin/bash
-#=============================================================#
+#================= ============================================#
 # Name:         Stunnel Auto Installer                        #
 # Description:  Automatic install and setup stunnel           #
 #               for Debian / ubuntu                           #
