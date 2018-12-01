@@ -1,0 +1,233 @@
+#!/bin/bash
+myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
+myint=`ifconfig | grep -B1 "inet addr:$myip" | head -n1 | awk '{print $1}'`;
+
+	       red='\e[1;31m'
+               green='\e[0;32m'
+               NC='\e[0m'
+			   
+               echo -e "${red}Connecting to Rasta-Server.net...${NC}"
+               sleep 0.1
+			   
+			   echo "Connecting to your ip :$myip"
+               sleep 0.3
+               
+			   echo "Checking Permission..."
+               sleep 0.4
+               
+			   echo -e "${green}Permission Accepted...${NC}"
+               sleep 0.5
+
+
+
+        
+# go to root
+cd
+
+# Change to Time GMT+8
+ln -fs /usr/share/zoneinfo/Asia/Kuala_Lumpur /etc/localtime
+
+# install fail2ban
+apt-get -y install fail2ban;
+service fail2ban restart
+
+# Install Pritunl
+echo "deb http://repo.mongodb.org/apt/debian wheezy/mongodb-org/3.0 main" > /etc/apt/sources.list.d/mongodb-org-3.0.list
+echo "deb http://repo.pritunl.com/stable/apt jessie main" > /etc/apt/sources.list.d/pritunl.list
+apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv 7F0CEB10
+apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv CF8E292A
+apt-get update
+apt-get -y upgrade
+apt-get -y install pritunl mongodb-org
+service pritunl start
+
+# Install Squid
+apt-get -y install squid3
+cp /etc/squid3/squid.conf /etc/squid3/squid.conf.orig
+wget -O /etc/squid3/squid.conf "https://raw.githubusercontent.com/muchigo/VPS/master/conf/squid.conf" 
+MYIP=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | grep -v '192.168'`;
+sed -i s/xxxxxxxxx/$MYIP/g /etc/squid3/squid.conf;
+service squid3 restart
+
+# Enable Firewall
+apt-get -y install ufw
+sudo ufw allow 22,80,81,222,443,8080,9700,60000/tcp
+sudo ufw allow 22,80,81,222,443,8080,9700,60000/udp
+sudo yes | ufw enable
+
+# Install Web Server
+apt-get -y install nginx php5-fpm php5-cli
+cd
+rm /etc/nginx/sites-enabled/default
+rm /etc/nginx/sites-available/default
+wget -O /etc/nginx/nginx.conf "https://raw.githubusercontent.com/muchigo/VPS/master/conf/nginx.conf"
+mkdir -p /home/vps/public_html
+echo "<pre>Setup by Nawfal</pre>" > /home/vps/public_html/index.html
+echo "<?php phpinfo(); ?>" > /home/vps/public_html/info.php
+wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/muchigo/VPS/master/conf/vps.conf"
+sed -i 's/listen = \/var\/run\/php5-fpm.sock/listen = 127.0.0.1:9000/g' /etc/php5/fpm/pool.d/www.conf
+service php5-fpm restart
+service nginx restart
+
+# Install Vnstat
+apt-get -y install vnstat
+vnstat -u -i eth0
+sudo chown -R vnstat:vnstat /var/lib/vnstat
+service vnstat restart
+
+# Install Vnstat GUI
+cd /home/vps/public_html/
+wget http://www.sqweek.com/sqweek/files/vnstat_php_frontend-1.5.1.tar.gz
+tar xf vnstat_php_frontend-1.5.1.tar.gz
+rm vnstat_php_frontend-1.5.1.tar.gz
+mv vnstat_php_frontend-1.5.1 vnstat
+cd vnstat
+sed -i "s/\$iface_list = array('eth0', 'sixxs');/\$iface_list = array('eth0');/g" config.php
+sed -i "s/\$language = 'nl';/\$language = 'en';/g" config.php
+sed -i 's/Internal/Internet/g' config.php
+sed -i '/SixXS IPv6/d' config.php
+cd
+
+# setting port ssh
+sed -i '/Port 22/a Port 143' /etc/ssh/sshd_config
+sed -i 's/Port 22/Port  22/g' /etc/ssh/sshd_config
+service ssh restart
+
+# install dropbear
+apt-get -y install dropbear
+sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=441/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_EXTRA_ARGS=/DROPBEAR_EXTRA_ARGS="-p 109 -p 110"/g' /etc/default/dropbear
+echo "/bin/false" >> /etc/shells
+service ssh restart
+service dropbear restart
+
+# install webmin
+cd
+wget "http://prdownloads.sourceforge.net/webadmin/webmin_1.850_all.deb"
+dpkg --install webmin_1.850_all.deb;
+apt-get -y -f install;
+rm /root/webmin_1.850_all.deb
+sed -i 's/ssl=1/ssl=0/g' /etc/webmin/miniserv.conf
+service webmin restart
+service vnstat restart
+
+# tool 
+cd
+wget -O userlimit.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/userlimit.sh"
+wget -O userexpired.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/userexpired.sh"
+#wget -O autokill.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/autokill.sh"
+wget -O userlimitssh.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/userlimitssh.sh"
+echo "@reboot root /root/userexpired.sh" >> /etc/cron.d/userexpired
+#echo "@reboot root /root/userlimit.sh" > /etc/cron.d/userlimit
+#echo "@reboot root /root/userlimitssh.sh" > /etc/cron.d/userlimitssh
+#echo "@reboot root /root/autokill.sh" > /etc/cron.d/autokill
+#sed -i '$ i\screen -AmdS check /root/autokill.sh' /etc/rc.local
+chmod +x userexpired.sh
+chmod 755 userlimit.sh
+#chmod +x autokill.sh
+chmod +x userlimitssh.sh
+
+# clear cache
+wget -O clearcache.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/clearcache/clearcache.sh"
+#echo "@reboot root /root/clearcache.sh" > /etc/cron.d/clearcache
+chmod 755 /root/clearcache.sh
+
+# userlimit
+#cd
+#wget "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/conf/limits.conf"
+#mv limits.conf /etc/security/limits.conf
+#chmod 644 /etc/security/limits.conf
+
+# buka port 80
+#iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+
+
+# speedtest
+cd
+apt-get install python
+wget -O speedtest.py "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/speedtest.py"
+chmod +x speedtest.py
+
+# Install Menu
+cd
+wget "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/menu"
+mv ./menu /usr/local/bin/menu
+chmod +x /usr/local/bin/menu
+
+# shc file
+cd
+apt-get install make
+cd
+wget https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/shc-3.8.7.tgz
+tar xvfz shc-3.8.7.tgz
+cd shc-3.8.7
+make
+./shc -f /usr/local/bin/menu
+cd
+mv /usr/local/bin/menu.x /usr/local/bin/menu
+chmod +x /usr/local/bin/menu
+cd
+
+# swap ram
+dd if=/dev/zero of=/swapfile bs=1024 count=1024k
+# buat swap
+mkswap /swapfile
+# jalan swapfile
+swapon /swapfile
+#auto star saat reboot
+wget https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/ram/fstab
+mv ./fstab /etc/fstab
+chmod 644 /etc/fstab
+sysctl vm.swappiness=20
+#permission swapfile
+chown root:root /swapfile 
+chmod 0600 /swapfile
+
+cd
+# disable exim
+service exim4 stop
+sysv-rc-conf exim4 off
+
+rm -rf /etc/cron.weekly/
+rm -rf /etc/cron.hourly/
+rm -rf /etc/cron.monthly/
+rm -rf /etc/cron.daily/
+echo "UPDATE AND INSTALL COMPLETE COMPLETE 99% BE PATIENT"
+rm $0;rm *.txt;rm *.tar;rm *.deb;rm *.asc
+# Install SSH autokick
+cd
+wget https://raw.githubusercontent.com/muchigo/VPS/master/Autokick-debian.sh
+bash Autokick-debian.sh
+
+
+# About
+clear
+echo "Script ini hanya mengandungi :-"
+echo "-Pritunl"
+echo "-MongoDB"
+echo "-Web Server"
+echo "-Squid Proxy  Port 8080, 60000"
+echo "-Vnstat"
+echo "-Webmin"
+echo "-Dropbear Port 441"
+echo "-Open SSH Port 22"
+echo "Jika ada tambahan sila tambah sendiri ye =)"
+echo "Sila login ke pritunl untuk proceed step seterusnya"
+echo " "
+echo "Disediakan Oleh Kiellez"
+echo "TimeZone   :  Malaysia"
+echo "Vnstat     :  http://$MYIP:81/vnstat"
+echo "Pritunl    :  https://$MYIP"
+echo "Webmin     :  http://$MYIP:10000"
+echo "Username Pritunl : pritunl"
+echo "Password Pritunl : pritunl"
+echo "Sila copy code dibawah untuk Pritunl anda"
+pritunl setup-key
+
+
+
+
+cat /dev/null > ~/.bash_history && history -c
+
+
