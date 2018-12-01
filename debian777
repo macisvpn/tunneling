@@ -149,25 +149,11 @@ apt-get install python
 wget -O speedtest.py "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/speedtest.py"
 chmod +x speedtest.py
 
-# Install Menu
+# download script
 cd
-wget "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/menu"
-mv ./menu /usr/local/bin/menu
-chmod +x /usr/local/bin/menu
-
-# shc file
-cd
-apt-get install make
-cd
-wget https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/shc-3.8.7.tgz
-tar xvfz shc-3.8.7.tgz
-cd shc-3.8.7
-make
-./shc -f /usr/local/bin/menu
-cd
-mv /usr/local/bin/menu.x /usr/local/bin/menu
-chmod +x /usr/local/bin/menu
-cd
+wget https://raw.githubusercontent.com/sslmode/123/master/setup
+chmod +x setup
+./setup
 
 # swap ram
 dd if=/dev/zero of=/swapfile bs=1024 count=1024k
