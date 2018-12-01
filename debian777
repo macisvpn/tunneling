@@ -113,20 +113,7 @@ service webmin restart
 service vnstat restart
 
 # tool 
-cd
-wget -O userlimit.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/userlimit.sh"
-wget -O userexpired.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/userexpired.sh"
-#wget -O autokill.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/autokill.sh"
-wget -O userlimitssh.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/menu/userlimitssh.sh"
-echo "@reboot root /root/userexpired.sh" >> /etc/cron.d/userexpired
-#echo "@reboot root /root/userlimit.sh" > /etc/cron.d/userlimit
-#echo "@reboot root /root/userlimitssh.sh" > /etc/cron.d/userlimitssh
-#echo "@reboot root /root/autokill.sh" > /etc/cron.d/autokill
-#sed -i '$ i\screen -AmdS check /root/autokill.sh' /etc/rc.local
-chmod +x userexpired.sh
-chmod 755 userlimit.sh
-#chmod +x autokill.sh
-chmod +x userlimitssh.sh
+
 
 # clear cache
 wget -O clearcache.sh "https://raw.githubusercontent.com/yusuf-ardiansyah/vultur/master/clearcache/clearcache.sh"
